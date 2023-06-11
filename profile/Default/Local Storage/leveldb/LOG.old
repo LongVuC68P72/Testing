@@ -1,0 +1,5 @@
+2023/05/30-18:39:42.427 46a4 Reusing MANIFEST D:\Testing\profile\Default\Local Storage\leveldb/MANIFEST-000001
+2023/05/30-18:39:42.428 46a4 Recovering log #11
+2023/05/30-18:39:42.428 46a4 Level-0 table #14: started
+2023/05/30-18:39:42.431 46a4 Level-0 table #14: 14079 bytes OK
+2023/05/30-18:39:42.440 46a4 Delete type=0 #11

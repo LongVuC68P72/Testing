@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+          name="viewport">
+    <title>Tiki Captcha</title>
+    <link href="https://fonts.google.com/specimen/Inter?query=Inter&preview.text_type=custom" ref="stylesheet"/>
+    <style>
+        .w-6 {
+            width: 1.5rem;
+        }
+
+        .h-5 {
+            height: 1.25rem;
+        }
+
+        .w-5 {
+            width: 1.25rem;
+        }
+
+        .captcha-popup {
+            position: fixed;
+            z-index: 9999999;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            transition: all 0.5s ease-in-out;
+            background-color: rgba(39, 39, 42, 0.7);
+            display: none;
+            -webkit-justify-content: center;
+            justify-content: center;
+            -webkit-align-items: center;
+            align-items: center;
+            opacity: 0;
+            font-family: Inter, sans-serif;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        .captcha-popup.show {
+            display: -webkit-flex;
+            display: flex;
+            opacity: 1;
+        }
+
+        .captcha-popup-wrapper {
+            background-color: #fff;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            word-wrap: break-word;
+            background-clip: border-box;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .captcha-popup-header {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: space-between;
+            justify-content: space-between;
+            padding: 18px 18px 18px 16px;
+            position: relative;
+            background: 0 0;
+        }
+
+        .captcha-popup-header p {
+            margin: 0;
+            padding: 0;
+            font-style: normal;
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 24px;
+            color: #38383d;
+        }
+
+        .captcha-popup-header svg {
+            fill: black;
+            width: 14px;
+            height: 14px;
+            padding: 5px;
+        }
+
+        .captcha-popup-header:after {
+            position: absolute;
+            content: '';
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .captcha-close-popup {
+            cursor: pointer;
+        }
+
+        .captcha-popup-body .guide {
+            padding: 16px;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+            color: #fff;
+            background-color: #0b74e5;
+            letter-spacing: 0.3px;
+            width: 312px;
+            box-sizing: border-box;
+        }
+
+        .captcha-popup-body .error {
+            box-sizing: border-box;
+            background: #fff0f1;
+            border: 1px solid #ffb8bc;
+            box-sizing: border-box;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: space-between;
+            padding-left: 16px;
+            padding-right: 6px;
+            transition: all 0.3s linear;
+            height: 44px;
+            margin: 12px 16px 0 16px;
+            display: none;
+        }
+
+        .error.show {
+            display: flex;
+        }
+
+        .error .left p {
+            display: inline-block;
+            margin: 0;
+            padding: 0;
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+            margin-left: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .error .left svg {
+            vertical-align: middle;
+        }
+
+        .error .right {
+            cursor: pointer;
+            color: #0b74e5;
+            padding: 10px;
+            font-style: normal;
+            font-weight: 500;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .captcha-puzzle {
+            padding: 12px 16px 20px 16px;
+            box-sizing: border-box;
+        }
+
+        .captcha-popup-img {
+            position: relative;
+        }
+
+        .canvas-bg {
+            border-radius: 8px;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .canvas-block {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .sliderContainer {
+            position: relative;
+            text-align: center;
+            line-height: 44px;
+            color: #515158;
+            border-radius: 8px;
+            height: 44px;
+            margin-top: 12px;
+        }
+
+        .sliderbg {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 44px;
+            box-sizing: border-box;
+            background: #f5f5fa;
+            border: 1px solid #ebebf0;
+            box-sizing: border-box;
+            border-radius: 8px;
+            transition: all 0.3s linear;
+        }
+
+        .sliderMask {
+            background: #dbeeff;
+            border-radius: 8px;
+            z-index: 3;
+            transition: background 0.3s linear;
+        }
+
+        .slider,
+        .sliderMask {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+        }
+
+        .slider {
+            width: 44px;
+            background: #fff;
+            border: 1px solid #ebebf0;
+            box-sizing: border-box;
+            box-shadow: 0 2px 8px rgba(40, 40, 43, 0.16);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s linear;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            transition: box-shadow 0.3s linear, background 0.3s linear;
+            z-index: 3;
+        }
+
+        .slider svg {
+            vertical-align: -0.125em;
+            fill: white;
+            background: 0 0;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        svg.default {
+            opacity: 1;
+            fill: black;
+        }
+
+        .success svg.default,
+        .success svg.fail {
+            opacity: 0;
+        }
+
+        .success svg.success {
+            opacity: 1;
+        }
+
+        .fail svg.default,
+        .fail svg.success {
+            opacity: 0;
+        }
+
+        .fail svg.fail {
+            opacity: 1;
+        }
+
+        .slider:active,
+        .slider:focus,
+        .slider:visited {
+            box-shadow: 0 0 0 2px rgba(26, 148, 255, 0.2);
+        }
+
+        .slider-text {
+            position: relative;
+            z-index: 2;
+        }
+
+        .success .sliderMask {
+            background-color: #effff4;
+        }
+
+        .success .slider {
+            background-color: #2dc26d;
+            box-shadow: 0 2px 4px rgba(40, 40, 43, 0.1);
+        }
+
+        .fail .sliderMask {
+            background-color: #fff0f1;
+        }
+
+        .fail .slider {
+            background: #ff424e;
+            box-shadow: 0 2px 4px rgba(40, 40, 43, 0.1);
+        }
+
+        .captcha-refresh {
+            text-align: center;
+            cursor: pointer;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .captcha-refresh p {
+            font-style: normal;
+            font-weight: 500;
+            font-size: 14px;
+            line-height: 20px;
+            color: #64646d;
+            margin: 0;
+            padding: 0;
+            letter-spacing: 0.3px;
+            margin-left: 10px;
+        }
+
+        .loading {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            transition: all 0.3s linear;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .loading.show {
+            opacity: 1;
+        }
+
+        .dashed-loading {
+            position: relative;
+            height: 50px;
+            width: 50px;
+        }
+
+        .dashed-loading:after,
+        .dashed-loading:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+        }
+
+        .dashed-loading:before {
+            z-index: 5;
+            border: 3px dashed #0b74e5;
+            border-left: 3px solid transparent;
+            border-bottom: 3px solid transparent;
+            -webkit-animation: dashed 1s linear infinite;
+            animation: dashed 1s linear infinite;
+        }
+
+        .dashed-loading:after {
+            z-index: 10;
+            border: 3px solid #0b74e5;
+            border-left: 3px solid transparent;
+            border-bottom: 3px solid transparent;
+            -webkit-animation: dashed 1s ease infinite;
+            animation: dashed 1s ease infinite;
+        }
+
+        .captcha-text {
+            margin: 16px 12px;
+        }
+
+        .main-area {
+            display: flex;
+            width: 280px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .main-area .action {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .captcha-text button {
+            background: 0 0;
+            border: none;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            outline: 0;
+            cursor: pointer;
+        }
+
+        .action button {
+            width: 40px;
+            height: 40px;
+            line-height: 30px;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid gray;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s linear;
+        }
+
+        .action button:last-child {
+            margin-top: 20px;
+        }
+
+        .action button svg {
+            fill: black;
+        }
+
+        .action button:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .input-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-area span {
+            height: 34px;
+            padding: 0 12px;
+            border: 1px solid #c4c4cf;
+            border-radius: 4px;
+            transition: all 0.3s linear 0s;
+            background-color: #fff;
+            display: flex;
+            outline: 0;
+            width: 100%;
+            margin-right: 10px;
+        }
+
+        .input-area span:hover {
+            border-color: #1a94ff;
+        }
+
+        .input-area span:active,
+        .input-area span:focus {
+            border-color: #1a94ff;
+            box-shadow: rgb(26 148 255 / 20%) 0 0 0 2px;
+        }
+
+        .input-area input {
+            margin: 0;
+            padding: 0;
+            border: none;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 20px;
+            background-color: #fff;
+            color: #38383d;
+            outline: 0;
+            height: 100%;
+            appearance: none;
+        }
+
+        .input-area button {
+            display: flex;
+            -webkit-box-pack: center;
+            justify-content: center;
+            -webkit-box-align: center;
+            align-items: center;
+            height: 36px;
+            background: #0b74e5;
+            min-width: 72px;
+            border: 1px solid #0b74e5;
+            border-radius: 4px;
+            padding: 8px 16px;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out 0s;
+        }
+
+        .captcha-slide {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+            position: relative;
+            margin: 12px 16px;
+        }
+
+        .meiliSlide {
+            position: relative;
+            text-align: center;
+            height: 44px;
+            line-height: 44px;
+            border-radius: 8px;
+            font-family: Arial, Helvetica, sans-serif;
+            box-sizing: border-box;
+            border: 1px solid #ebebf0;
+            transition: background 0.3s linear;
+            background: #f5f5fa;
+        }
+
+        .progressBar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 0;
+            height: 100%;
+            border-radius: 8px;
+            background-color: #dbeeff;
+            transition: background 0.3s linear;
+        }
+
+        .text {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            text-align: center;
+            color: #515158;
+            font-family: Inter, sans-serif;
+            font-style: normal;
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 44px;
+        }
+
+        .drag {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            left: 0;
+            display: inline-block;
+            line-height: 44px;
+            cursor: pointer;
+            text-align: center;
+            background: #fff;
+            border: 1px solid #ebebf0;
+            box-sizing: border-box;
+            box-shadow: 0 2px 8px rgba(40, 40, 43, 0.16);
+            border-radius: 8px;
+            transition: box-shadow 0.3s linear, background 0.3s linear;
+        }
+
+        .drag:active,
+        .drag:focus,
+        .drag:visited {
+            box-shadow: 0 0 0 2px rgba(26, 148, 255, 0.2);
+        }
+
+        .drag svg {
+            vertical-align: -0.125em;
+            fill: white;
+            background: 0 0;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .success .progressBar {
+            background-color: #effff4;
+        }
+
+        .success .drag {
+            background-color: #2dc26d;
+            box-shadow: 0 2px 4px rgba(40, 40, 43, 0.1);
+        }
+
+        .fail .progressBar {
+            background-color: #fff0f1;
+        }
+
+        .fail .drag {
+            background: #ff424e;
+            box-shadow: 0 2px 4px rgba(40, 40, 43, 0.1);
+        }
+
+        svg.default {
+            opacity: 1;
+            fill: black;
+        }
+
+        .success svg.default,
+        .success svg.fail {
+            opacity: 0;
+        }
+
+        .success svg.success {
+            opacity: 1;
+        }
+
+        .fail svg.default,
+        .fail svg.success {
+            opacity: 0;
+        }
+
+        .fail svg.fail {
+            opacity: 1;
+        }
+
+        @keyframes resetSlide {
+            to {
+                left: 0;
+                margin-left: 0;
+            }
+        }
+
+        @keyframes endSlide {
+            to {
+                left: 100%;
+                margin-left: -44px;
+            }
+        }
+
+        @keyframes endProgress {
+            to {
+                width: 100%;
+            }
+        }
+
+        @keyframes startProgress {
+            to {
+                width: 0;
+            }
+        }
+
+        @keyframes dashed {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+<script src="/assets/static-v1.js"></script>
+<script>
+    initCaptcha("https://tiki.vn, https://beta.tiki.vn");
+</script>
+</body>
+
+</html>

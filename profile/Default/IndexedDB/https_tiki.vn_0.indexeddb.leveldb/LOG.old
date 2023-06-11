@@ -1,0 +1,13 @@
+2023/05/30-18:35:20.928 392c Reusing MANIFEST D:\Testing\profile\Default\IndexedDB\https_tiki.vn_0.indexeddb.leveldb/MANIFEST-000001
+2023/05/30-18:35:20.928 392c Recovering log #14
+2023/05/30-18:35:20.929 392c Reusing old log D:\Testing\profile\Default\IndexedDB\https_tiki.vn_0.indexeddb.leveldb/000014.log 
+2023/05/30-18:35:24.390 1ad0 Level-0 table #19: started
+2023/05/30-18:35:24.393 1ad0 Level-0 table #19: 228095 bytes OK
+2023/05/30-18:35:24.395 1ad0 Delete type=0 #14
+2023/05/30-18:35:24.395 392c Manual compaction at level-0 from '\x00\x09\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0a\x00\x00\x00' @ 0 : 0; will stop at (end)
+2023/05/30-18:35:25.093 392c Compacting 1@1 + 1@2 files
+2023/05/30-18:35:25.099 392c Generated table #20@1: 2112 keys, 569721 bytes
+2023/05/30-18:35:25.099 392c Compacted 1@1 + 1@2 files => 569721 bytes
+2023/05/30-18:35:25.099 392c compacted to: files[ 0 0 1 0 0 0 0 ]
+2023/05/30-18:35:25.099 392c Delete type=2 #16
+2023/05/30-18:35:25.099 392c Delete type=2 #19
